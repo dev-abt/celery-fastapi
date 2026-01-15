@@ -1,0 +1,30 @@
+services:
+  redis:
+    image: redis:latest
+    expose:
+      - 6379
+    command: redis-server --appendonly yes
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 8000
+    ports:
+      - 8000:8000
+    depends_on:
+      - redis
+  
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: celery -A main.celery worker --loglevel=info
+    depends_on:
+      - redis
