@@ -14,6 +14,9 @@ class BaseConfig:
     CELERY_BROKER_URL: str = os.environ.get(
         "CELERY_BROKER_URL", "redis://127.0.0.1:6379/0"
     )
+    REDBEAT_REDIS_URL: str = os.environ.get(
+        "REDBEAT_REDIS_URL", "redis://127.0.0.1:6379/0"
+    )
     RESULT_BACKEND: str = (
         os.environ.get(  # Based on deprecation warning from CELERY_RESULT_BACKEND
             "CELERY_RESULT_BACKEND", "redis://127.0.0.1:6379/0"
@@ -22,6 +25,13 @@ class BaseConfig:
     WS_MESSAGE_QUEUE: str = os.environ.get(
         "WS_MESSAGE_QUEUE", "redis://127.0.0.1:6379/0"
     )
+
+    CELERY_BEAT_SCHEDULE: dict = {
+        "task-schedule-work": {
+            "task": "task_schedule_work",
+            "schedule": 5.0,  # five seconds
+        },
+    }
 
 
 class DevelopmentConfig(BaseConfig):

@@ -15,6 +15,10 @@ def task_postrun_handler(task_id, **kwargs):
 
     async_to_sync(update_celery_task_status)(task_id)
 
+    from project.ws.views import update_celery_task_status_socketio
+
+    update_celery_task_status_socketio(task_id)
+
 
 @shared_task
 def divide(x, y):
@@ -43,3 +47,9 @@ def sample_task(email):
     from project.users.views import api_call
 
     api_call(email)
+
+
+# SCHEDULED TASK
+@shared_task(name="task_schedule_work")
+def task_schedule_work():
+    logger.info("task_schedule_work run")

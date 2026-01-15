@@ -24,6 +24,9 @@ def create_app() -> FastAPI:
 
     from project.users import users_router
     from project.ws import ws_router
+    from project.ws.views import register_socketio_app
+
+    register_socketio_app(app)
 
     app.include_router(users_router)
     app.include_router(ws_router)
