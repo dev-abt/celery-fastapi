@@ -11,8 +11,18 @@ class BaseConfig:
     )
     DATABASE_CONNECT_DICT: dict = {}
 
+    CELERY_BROKER_URL: str = os.environ.get(
+        "CELERY_BROKER_URL", "redis://127.0.0.1:6379/0"
+    )
+    RESULT_BACKEND: str = (
+        os.environ.get(  # Based on deprecation warning from CELERY_RESULT_BACKEND
+            "CELERY_RESULT_BACKEND", "redis://127.0.0.1:6379/0"
+        )
+    )
+
 
 class DevelopmentConfig(BaseConfig):
+    CELERY_TASK_ALWAYS_EAGER: bool = True
     pass
 
 
