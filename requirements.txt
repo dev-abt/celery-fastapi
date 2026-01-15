@@ -4,6 +4,13 @@ redis==5.0.1
 celery==5.3.6
 SQLAlchemy>=2.0.36
 alembic==1.13.1
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.11
 flower==2.0.1
 watchfiles==0.21.0
+Jinja2==3.1.2
+requests==2.31.0
+
+# Broadcasting
+asgiref==3.7.2
+asyncio-redis==0.16.0
+broadcaster==0.2.0
