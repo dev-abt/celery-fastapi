@@ -20,3 +20,7 @@ python-socketio==5.7.1
 
 # Dynamic Scheduling
 celery-redbeat==2.3.3
+
+# Pytests
+pytest==7.4.4
+httpx==0.26.0

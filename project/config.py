@@ -2,6 +2,15 @@ import os
 import pathlib
 from functools import lru_cache
 
+from kombu import Queue
+
+
+def route_task(name, args, kwargs, options, task=None, **kw):
+    if ":" in name:
+        queue, _ = name.split(":")
+        return {"queue": queue}
+    return {"queue": "default"}
+
 
 class BaseConfig:
     BASE_DIR: pathlib.Path = pathlib.Path(__file__).parent.parent
@@ -33,6 +42,20 @@ class BaseConfig:
         },
     }
 
+    CELERY_TASK_DEFAULT_QUEUE: str = "default"
+
+    # Force all queues to be explicitly listed in `CELERY_TASK_QUEUES` to help prevent typos
+    CELERY_TASK_CREATE_MISSING_QUEUES: bool = False
+
+    CELERY_TASK_QUEUES: list = (
+        # need to define default queue here or exception would be raised
+        Queue("default"),
+        Queue("high_priority"),
+        Queue("low_priority"),
+    )
+
+    CELERY_TASK_ROUTES = (route_task,)
+
 
 class DevelopmentConfig(BaseConfig):
     CELERY_TASK_ALWAYS_EAGER: bool = False
@@ -44,7 +67,9 @@ class ProductionConfig(BaseConfig):
 
 
 class TestingConfig(BaseConfig):
-    pass
+    # https://fastapi.tiangolo.com/advanced/testing-database/
+    DATABASE_URL: str = "sqlite:///./test.db"
+    DATABASE_CONNECT_DICT: dict = {"check_same_thread": False}
 
 
 @lru_cache()  # Least Recently Used Cache - This makes it so the program only loads the config once and then uses the cached version for the rest of the program.

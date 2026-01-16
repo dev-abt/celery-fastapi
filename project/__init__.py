@@ -18,6 +18,10 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     app = FastAPI(lifespan=lifespan)
 
+    from project.logging import configure_logging
+
+    configure_logging()
+
     from celery_utils import create_celery
 
     app.celery_app = create_celery()

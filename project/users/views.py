@@ -1,15 +1,25 @@
 import logging
 import random
+from string import ascii_lowercase
 
 import requests
 from celery.result import AsyncResult
-from fastapi import Request
+from fastapi import Depends, Request
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
+
+from project.database import get_db_session
 
 from . import users_router
+from .models import User
 from .schemas import UserBody
-from .tasks import sample_task, task_process_notification
+from .tasks import (
+    sample_task,
+    task_add_subscribe,
+    task_process_notification,
+    task_send_welcome_email,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +37,7 @@ def api_call(email: str):
 
 @users_router.get("/form/")
 def form_example_get(request: Request):
-    return templates.TemplateResponse("form.html", {"request": request})
+    return templates.TemplateResponse(request, "form.html")
 
 
 @users_router.post("/form/")
@@ -68,15 +78,49 @@ def webhook_test():
 @users_router.post("/webhook_test_async/")
 def webhook_test_async():
     task = task_process_notification.delay()
-    print(task.id)
+    logger.info(task.id)
     return "pong"
 
 
 @users_router.get("/form_ws/")
 def form_ws_example(request: Request):
-    return templates.TemplateResponse("form_ws.html", {"request": request})
+    return templates.TemplateResponse(request, "form_ws.html")
 
 
 @users_router.get("/form_socketio/")
 def form_socketio_example(request: Request):
-    return templates.TemplateResponse("form_socketio.html", {"request": request})
+    return templates.TemplateResponse(request, "form_socketio.html")
+
+
+def random_username():
+    username = "".join([random.choice(ascii_lowercase) for i in range(5)])
+    return username
+
+
+@users_router.get("/transaction_celery/")
+def transaction_celery(session: Session = Depends(get_db_session)):
+    username = random_username()
+    user = User(
+        username=f"{username}",
+        email=f"{username}@test.com",
+    )
+    with session.begin():
+        session.add(user)
+
+    logger.info(f"user {user.id} {user.username} is persistent now")
+    task_send_welcome_email.delay(user.id)
+    return {"message": "done"}
+
+
+@users_router.post("/user_subscribe/")
+def user_subscribe(user_body: UserBody, session: Session = Depends(get_db_session)):
+    with session.begin():
+        user = session.query(User).filter_by(username=user_body.username).first()
+        if not user:
+            user = User(
+                username=user_body.username,
+                email=user_body.email,
+            )
+            session.add(user)
+    task_add_subscribe.delay(user.id)
+    return {"message": "send task to Celery successfully"}
